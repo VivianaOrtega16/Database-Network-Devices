@@ -8,14 +8,36 @@ from NetworkDevices import Switch
 from NetworkDevices import Mac
 from NetworkDevices import NetworkDevice
 
+"""self.host = host 
+        self.user = user 
+        self.password = password 
+        self.database = database 
+        self.connection = None """
+        
+"""try:
+            self.connection = mysql.connector.connect(
+                host=host,
+                user=user,
+                password=password,
+                database=database
+            )
+            self.cursor = self.connection.cursor(dictionary=True)
+            print(" Conexión exitosa a la base de datos")
+        except mysql.connector.Error as err:
+            print(f" Error al conectar a la base de datos: {err}")
+            self.connection = None
+            self.cursor = None"""
+
 class DatabaseConnector: 
     def __init__(self, host="localhost", user="root", password="", database="mynetworkdb"): 
         self.host = host 
         self.user = user 
         self.password = password 
         self.database = database 
-        self.connection = None 
-
+        self.connection = None
+     
+     
+        
     def connect(self): 
         try: 
             self.connection = mysql.connector.connect( 
@@ -42,14 +64,6 @@ class DatabaseConnector:
             return cursor.lastrowid 
         except Error as e: 
             print(f"Error: {e}") 
-
-    """def fetch_query(self, query, params=None): 
-        try: 
-            cursor = self.connection.cursor(dictionary=True) 
-            cursor.execute(query, params) 
-            return cursor.fetchall() 
-        except Error as e: 
-            print(f"Error: {e}") """
             
     def fetch_query(self, query, params=None): 
         try: 
@@ -65,61 +79,64 @@ class DatabaseConnector:
     
 
 
-    """def get_all_companies(self): 
+    def get_all_companies(self): 
         query = "SELECT * FROM Company" 
         companies_data = self.fetch_query(query) 
         companies = [Company(company["id"], company["name"], company["city"]) for company in companies_data] 
         for company in companies: 
             routers = self.get_routers_by_company(company.company_id) 
             for router in routers: 
-                routes = self.get_routing_table(router.router_id) 
+                routes = self.get_routing_table(router.id) 
                 router.add_routes(routes) 
                 company.add_router(router) 
-        return companies """
+            modems = self.get_modems_by_company(company.company_id)
+            switches = self.get_switches_by_company(company.company_id)
+            for switch in switches:
+                macs=self.get_mac_table(switch.switch_id)
+                switch.add_mac_entries(macs)
+                company.add_switch(switch)
+        return companies 
+      
+
         
-    def get_all_companies(self):
+        #-------------anexos 8
+    def get_modems_by_company(self, company_id):
+        query = """
+            SELECT m.modem_id, m.network_id AS networkdevice_id, nd.device_name, nd.manufacturer, nd.model
+            FROM Modem m
+            JOIN NetworkDevice nd ON m.network_id = nd.id
+            WHERE nd.company_id = %s"""
         
-    
-        # 1️⃣ Traer todas las compañías
-        query = "SELECT * FROM Company"
-        companies_data = self.fetch_query(query)
-        companies = [Company(company["id"], company["name"], company["city"]) for company in companies_data]
-
-        # 2️⃣ Recorrer cada compañía y llenar dispositivos
-        for company in companies:
-
-            # ---- Routers ----
-            routers_data = self.get_routers_by_company(company.company_id)
-            for router in routers_data:
-                # llenar rutas de cada router
-                routes = self.get_routing_table(router.id)
-                router.add_routes(routes)
-            company.add_routers(routers_data)  # agregar routers a la compañía
-
-            # ---- Modems ----
-            """modems_data = self.get_modems_by_company(company.company_id)
-            company.add_modems(modems_data)
-
-            # ---- Switches ----
-            switches_data = self.get_switches_by_company(company.company_id)
-            for switch in switches_data:
-                # llenar tabla MAC de cada switch
-                mac_entries = self.get_mac_entries_by_switch(switch.switch_id)
-                switch.add_mac_entries(mac_entries)
-            company.add_switches(switches_data)"""
-
-        return companies
-
-
-    """def get_routers_by_company(db, id): 
-        query = "SELECT * FROM Router WHERE id = %s" 
-        routers_data = db.fetch_query(query, (company_id,)) 
-        routers = [ 
-            Router(router["id"], router["device_name"], router["manufacturer"], router["model"]) 
-            for router in routers_data 
-        ] 
-        return routers """
+        modems_data = self.fetch_query(query, (company_id,))
         
+        modems = [
+            Modem(
+                modem["modem_id"],  # id del modem
+                modem["device_name"],
+                modem["manufacturer"],
+                modem["model"]
+            ) for modem in modems_data
+        ]
+        return modems
+    def get_switches_by_company(self, company_id):
+        query = """
+            SELECT s.switch_id, s.network_id AS networkdevice_id, nd.device_name, nd.manufacturer, nd.model
+            FROM Switch s
+            JOIN NetworkDevice nd ON s.network_id = nd.id
+            WHERE nd.company_id = %s"""
+        
+        switches_data = self.fetch_query(query, (company_id,))
+        
+        switches = [
+            Switch(
+                switch["switch_id"],  # id del switch
+                switch["device_name"],
+                switch["manufacturer"],
+                switch["model"]
+            ) for switch in switches_data
+        ]
+        return switches
+
 #this is work acoord hope, his id is of the table router , not from networkdevice        
     def get_routers_by_company(self, company_id):
     
@@ -140,7 +157,33 @@ class DatabaseConnector:
             ) for router in routers_data
         ]
         return routers
-#consulta 3
+    def get_mac_table(db, switch_id):
+        query = "SELECT * FROM mac WHERE switch_id = %s"
+        mac_data = db.fetch_query(query, (switch_id,))
+        
+        mac_entries = [
+            Mac(
+                mac["mac_id"],
+                mac["mac_address"],
+                mac["port"]
+            )
+            for mac in mac_data
+        ]
+        return mac_entries
+
+
+
+#---------consulta 1
+    def get_devices_with_companies(self):
+        query = """
+            SELECT nd.id AS device_id, nd.device_name AS device_name,
+                c.id AS company_id, c.name AS company_name
+            FROM NetworkDevice nd
+            JOIN Company c ON nd.company_id = c.id
+        """
+        return self.fetch_query(query)
+
+#------consulta 3
     def get_companies_without_routers(db):
         query = """
             SELECT c.id, c.name, c.city
@@ -234,3 +277,37 @@ class DatabaseConnector:
         query = """INSERT INTO Route (router_id, destination_address, next_hop, metric, interface)  
                    VALUES (%s, %s, %s, %s, %s)""" 
         db.execute_query(query, (router_id, route.destination_address, route.next_hop, route.metric, route.interface)) 
+
+#ultimas dos propuestas 
+    def get_mac_table(db, switch_id):
+        query = "SELECT * FROM Mac WHERE switch_id = %s"
+        macs_data = db.fetch_query(query, (switch_id,))
+        
+        mac_entries = [
+            Mac(
+                mac["mac_id"],        # id de la MAC
+                mac["mac_address"],   # dirección MAC
+                mac["port"]           # puerto asociado
+            )
+            for mac in macs_data
+        ]
+        
+        return mac_entries
+
+
+    def get_most_used_port(db, switch_id):
+        
+        query = """
+            SELECT port, COUNT(*) as usage_count
+            FROM Mac
+            WHERE switch_id = %s
+            GROUP BY port
+            ORDER BY usage_count DESC
+            LIMIT 1
+        """
+        result = db.fetch_query(query, (switch_id,))
+
+        if result:
+            return result[0]["port"], result[0]["usage_count"]
+        else:
+            return None, 0

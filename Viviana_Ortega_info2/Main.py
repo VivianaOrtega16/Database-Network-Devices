@@ -12,25 +12,23 @@ db.connect()
 #company = Company(NULL_POINTER, "Claro", "Bogota") 
 #db.insert_company(company) 
 
-"""list_companies = db.get_all_companies() 
+#--------------CONSULTAS---------------------
+#consulta 1
+devices = db.get_devices_with_companies()
+for d in devices:
+    print(f"Dispositivo {d['device_name']} (ID {d['device_id']}) pertenece a la compañía {d['company_name']} (ID {d['company_id']})")
 
-for company in list_companies: 
-    company.print_company() """
-
-"""list_routers=db.get_routers_by_company(8)
-for router in list_routers:
-    router.print_router()"""
 #consulta 2    
 list_route=db.get_routing_table(2) 
 for route in list_route:
     route.display_info()
-#consulta 1
-print("consulta 1")
+    
+#consulta 3
 list_empty_companies=db.get_companies_without_routers()
 for company in list_empty_companies:
     company.print_company()
     
-#consulta3
+#consulta 4
 company_counts = db.get_company_device_counts()
 
 # Imprimir resultados
@@ -52,5 +50,26 @@ avg_hops = db.get_average_hops_per_router()
 print("Promedio de saltos por router:")
 for router_id, promedio in avg_hops.items():
     print(f"Router {router_id} -> promedio de {promedio:.2f} saltos")
+
+#dos consultas propuestas 
+
+# consulta 7
+macs = db.get_mac_table(6)
+    
+# Imprimir resultados
+if macs:
+    print(f"MACs del switch {6}:")
+    for m in macs:
+        print(f"ID: {m.mac_id}, MAC: {m.mac_address}, Puerto: {m.port}")
+else:
+    print(f"No se encontraron MACs para el switch {6}")
+# consulta 8
+#encontrar el puerto mas usado 
+port, usage_count = db.get_most_used_port(6)
+
+if port is not None:
+    print(f"El puerto más usado del switch {6} es {port} con {usage_count} MACs asociadas.")
+else:
+    print(f"No se encontraron MACs para el switch {6}.")
 
 db.disconnect() 
