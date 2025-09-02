@@ -70,52 +70,11 @@ class CLI:
             self.db.execute_query(query, (company_id,))
             print("Compañía eliminada junto con sus dispositivos.")
 
-    # ------------------- CRUD ROUTER -------------------
-    def menu_router(self):
-        company_id = input("ID de la compañía a la que pertenece el router: ")
-        companies = self.db.fetch_query("SELECT * FROM Company WHERE id=%s", (company_id,))
-        if not companies:
-            print("La compañía no existe.")
-            return
-        
-        print("\n--- CRUD ROUTER ---")
-        print("1. Crear Router")
-        print("2. Listar Routers")
-        print("3. Actualizar Router")
-        print("4. Eliminar Router (borra sus routes)")
-        opcion = input("Opción: ")
-
-        if opcion == "1":
-            name = input("Nombre del router: ")
-            model = input("Modelo: ")
-            query = "INSERT INTO Router (company_id, device_name, model) VALUES (%s, %s, %s)"
-            self.db.execute_query(query, (company_id, name, model))
-            print("Router creado.")
-        
-        elif opcion == "2":
-            routers = self.db.fetch_query("SELECT * FROM Router WHERE company_id=%s", (company_id,))
-            for r in routers:
-                print(f"{r['router_id']} - {r['device_name']} ({r['model']})")
-        
-        elif opcion == "3":
-            router_id = input("ID del router a actualizar: ")
-            new_name = input("Nuevo nombre: ")
-            query = "UPDATE Router SET device_name=%s WHERE router_id=%s"
-            self.db.execute_query(query, (new_name, router_id))
-            print("Router actualizado.")
-        
-        elif opcion == "4":
-            router_id = input("ID del router a eliminar: ")
-            # Primero borro routes asociadas
-            self.db.execute_query("DELETE FROM Route WHERE router_id=%s", (router_id,))
-            # Luego el router
-            self.db.execute_query("DELETE FROM Router WHERE router_id=%s", (router_id,))
-            print("Router eliminado junto con sus routes.")
-
+    
     # ------------------- CRUD ROUTE -------------------
     def menu_route(self):
         router_id = input("ID del router al que pertenece la route: ")
-        routers = self.db.fetch_query("SELECT * FROM Router WHERE router_id=%s", (router_id,))
+        routers = self.db.fetch_query("SELECT * FROM Router WHERE id=%s", (router_id,))
         if not routers:
             print("El router no existe.")
             return
@@ -154,45 +113,7 @@ class CLI:
             print("Route eliminada.")
 
     # ------------------- CRUD SWITCH -------------------
-    def menu_switch(self):
-        company_id = input("ID de la compañía a la que pertenece el switch: ")
-        companies = self.db.fetch_query("SELECT * FROM Company WHERE id=%s", (company_id,))
-        if not companies:
-            print("La compañía no existe.")
-            return
-        
-        print("\n--- CRUD SWITCH ---")
-        print("1. Crear Switch")
-        print("2. Listar Switches")
-        print("3. Actualizar Switch")
-        print("4. Eliminar Switch (borra sus MACs)")
-        opcion = input("Opción: ")
 
-        if opcion == "1":
-            name = input("Nombre del switch: ")
-            model = input("Modelo: ")
-            num_ports = input("Número de puertos: ")
-            query = "INSERT INTO Switch (company_id, device_name, model, num_ports) VALUES (%s, %s, %s, %s)"
-            self.db.execute_query(query, (company_id, name, model, num_ports))
-            print("Switch creado.")
-
-        elif opcion == "2":
-            switches = self.db.fetch_query("SELECT * FROM Switch WHERE company_id=%s", (company_id,))
-            for s in switches:
-                print(f"{s['switch_id']} - {s['device_name']} ({s['model']}, {s['num_ports']} puertos)")
-
-        elif opcion == "3":
-            switch_id = input("ID del switch a actualizar: ")
-            new_name = input("Nuevo nombre: ")
-            query = "UPDATE Switch SET device_name=%s WHERE switch_id=%s"
-            self.db.execute_query(query, (new_name, switch_id))
-            print("Switch actualizado.")
-
-        elif opcion == "4":
-            switch_id = input("ID del switch a eliminar: ")
-            self.db.execute_query("DELETE FROM Mac WHERE switch_id=%s", (switch_id,))
-            self.db.execute_query("DELETE FROM Switch WHERE switch_id=%s", (switch_id,))
-            print("Switch eliminado junto con sus MACs.")
 
     # ------------------- CRUD MAC -------------------
     def menu_mac(self):
@@ -227,12 +148,12 @@ class CLI:
 
     # ------------------- CRUD MODEM -------------------
     def menu_modem(self):
-        company_id = input("ID de la compañía a la que pertenece el modem: ")
-        companies = self.db.fetch_query("SELECT * FROM Company WHERE id=%s", (company_id,))
-        if not companies:
-            print("La compañía no existe.")
+        networkdevice_id = input("ID del dispositivo de red al que pertenece el modem: ")
+        devices = self.db.fetch_query("SELECT * FROM NetworkDevice WHERE networkdevice_id=%s", (networkdevice_id,))
+        if not devices:
+            print("El dispositivo de red no existe.")
             return
-        
+
         print("\n--- CRUD MODEM ---")
         print("1. Crear Modem")
         print("2. Listar Modems")
@@ -241,22 +162,23 @@ class CLI:
         opcion = input("Opción: ")
 
         if opcion == "1":
-            name = input("Nombre del modem: ")
-            model = input("Modelo: ")
-            query = "INSERT INTO Modem (company_id, device_name, model) VALUES (%s, %s, %s)"
-            self.db.execute_query(query, (company_id, name, model))
+            conection_type = input("Tipo de conexión: ")
+            ip = input("Dirección IP: ")
+            query = "INSERT INTO Modem (conection_type, ip, networkdevice_id) VALUES (%s, %s, %s)"
+            self.db.execute_query(query, (conection_type, ip, networkdevice_id))
             print("Modem creado.")
 
         elif opcion == "2":
-            modems = self.db.fetch_query("SELECT * FROM Modem WHERE company_id=%s", (company_id,))
+            modems = self.db.fetch_query("SELECT * FROM Modem WHERE networkdevice_id=%s", (networkdevice_id,))
             for m in modems:
-                print(f"{m['modem_id']} - {m['device_name']} ({m['model']})")
+                print(f"{m['modem_id']} - {m['conection_type']} ({m['ip']})")
 
         elif opcion == "3":
             modem_id = input("ID del modem a actualizar: ")
-            new_name = input("Nuevo nombre: ")
-            query = "UPDATE Modem SET device_name=%s WHERE modem_id=%s"
-            self.db.execute_query(query, (new_name, modem_id))
+            new_conection_type = input("Nuevo tipo de conexión: ")
+            new_ip = input("Nueva IP: ")
+            query = "UPDATE Modem SET conection_type=%s, ip=%s WHERE modem_id=%s"
+            self.db.execute_query(query, (new_conection_type, new_ip, modem_id))
             print("Modem actualizado.")
 
         elif opcion == "4":
@@ -264,3 +186,151 @@ class CLI:
             self.db.execute_query("DELETE FROM Modem WHERE modem_id=%s", (modem_id,))
             print("Modem eliminado.")
 
+    def menu_switch(self):
+        company_id = input("ID de la compañía a la que pertenece el switch: ")
+        companies = self.db.fetch_query("SELECT * FROM Company WHERE id=%s", (company_id,))
+        if not companies:
+            print("La compañía no existe.")
+            return
+        
+        print("\n--- CRUD SWITCH ---")
+        print("1. Crear Switch")
+        print("2. Listar Switches")
+        print("3. Actualizar Switch")
+        print("4. Eliminar Switch (borra sus MACs)")
+        opcion = input("Opción: ")
+
+        if opcion == "1":
+            # Crear NetworkDevice
+            name = input("Nombre del switch: ")
+            manufacturer = input("Fabricante: ")
+            model = input("Modelo: ")
+            num_ports = input("Número de puertos: ")
+
+            query_nd = "INSERT INTO networkdevice (company_id, device_name, manufacturer, model) VALUES (%s, %s, %s, %s)"
+            self.db.execute_query(query_nd, (company_id, name, manufacturer, model))
+
+            # Obtener el id del NetworkDevice recién creado
+            network_id = self.db.fetch_query("SELECT id FROM networkdevice WHERE company_id=%s AND device_name=%s",
+                                            (company_id, name))[0]['id']
+
+            # Crear Switch
+            query_sw = "INSERT INTO switch (num_ports, network_id) VALUES (%s, %s)"
+            self.db.execute_query(query_sw, (num_ports, network_id))
+            print("Switch creado.")
+
+        elif opcion == "2":
+            # Listar Switches con info de networkdevice
+            query = """
+                SELECT s.switch_id, s.num_ports, nd.device_name, nd.manufacturer, nd.model
+                FROM switch s
+                JOIN networkdevice nd ON s.network_id = nd.id
+                WHERE nd.company_id=%s
+            """
+            switches = self.db.fetch_query(query, (company_id,))
+            for s in switches:
+                print(f"{s['switch_id']} - {s['device_name']} ({s['manufacturer']}, {s['model']}, {s['num_ports']} puertos)")
+
+        elif opcion == "3":
+            switch_id = input("ID del switch a actualizar: ")
+            new_name = input("Nuevo nombre del switch: ")
+            # Primero obtenemos el network_id correspondiente
+            network = self.db.fetch_query("SELECT network_id FROM switch WHERE switch_id=%s", (switch_id,))
+            if not network:
+                print("Switch no encontrado.")
+                return
+            network_id = network[0]['network_id']
+            # Actualizamos el nombre en networkdevice
+            query = "UPDATE networkdevice SET device_name=%s WHERE id=%s"
+            self.db.execute_query(query, (new_name, network_id))
+            print("Switch actualizado.")
+
+        elif opcion == "4":
+            switch_id = input("ID del switch a eliminar: ")
+            # Obtener network_id
+            network = self.db.fetch_query("SELECT network_id FROM switch WHERE switch_id=%s", (switch_id,))
+            if not network:
+                print("Switch no encontrado.")
+                return
+            network_id = network[0]['network_id']
+            # Eliminar MACs (asumiendo que hay tabla Mac con switch_id)
+            self.db.execute_query("DELETE FROM Mac WHERE switch_id=%s", (switch_id,))
+            # Eliminar Switch
+            self.db.execute_query("DELETE FROM switch WHERE switch_id=%s", (switch_id,))
+            # Eliminar NetworkDevice
+            self.db.execute_query("DELETE FROM networkdevice WHERE id=%s", (network_id,))
+            print("Switch eliminado junto con sus MACs y su NetworkDevice.")
+
+    
+    def menu_router(self):
+        company_id = input("ID de la compañía a la que pertenece el router: ")
+        companies = self.db.fetch_query("SELECT * FROM Company WHERE id=%s", (company_id,))
+        if not companies:
+            print("La compañía no existe.")
+            return
+        
+        print("\n--- CRUD ROUTER ---")
+        print("1. Crear Router")
+        print("2. Listar Routers")
+        print("3. Actualizar Router")
+        print("4. Eliminar Router")
+        opcion = input("Opción: ")
+
+        if opcion == "1":
+            # Crear NetworkDevice
+            name = input("Nombre del router: ")
+            manufacturer = input("Fabricante: ")
+            model = input("Modelo: ")
+            routing_protocols = input("Protocolos de enrutamiento: ")
+
+            query_nd = "INSERT INTO networkdevice (company_id, device_name, manufacturer, model) VALUES (%s, %s, %s, %s)"
+            self.db.execute_query(query_nd, (company_id, name, manufacturer, model))
+
+            # Obtener el id del NetworkDevice recién creado
+            network_id = self.db.fetch_query("SELECT id FROM networkdevice WHERE company_id=%s AND device_name=%s",
+                                            (company_id, name))[0]['id']
+
+            # Crear Router
+            query_rt = "INSERT INTO router (routing_protocols, network_id) VALUES (%s, %s)"
+            self.db.execute_query(query_rt, (routing_protocols, network_id))
+            print("Router creado.")
+
+        elif opcion == "2":
+            # Listar Routers con info de networkdevice
+            query = """
+                SELECT r.id AS router_id, r.routing_protocols, nd.device_name, nd.manufacturer, nd.model
+                FROM router r
+                JOIN networkdevice nd ON r.network_id = nd.id
+                WHERE nd.company_id=%s
+            """
+            routers = self.db.fetch_query(query, (company_id,))
+            for r in routers:
+                print(f"{r['router_id']} - {r['device_name']} ({r['manufacturer']}, {r['model']}, Protocolos: {r['routing_protocols']})")
+
+        elif opcion == "3":
+            router_id = input("ID del router a actualizar: ")
+            new_name = input("Nuevo nombre del router: ")
+            # Obtener network_id
+            network = self.db.fetch_query("SELECT network_id FROM router WHERE id=%s", (router_id,))
+            if not network:
+                print("Router no encontrado.")
+                return
+            network_id = network[0]['network_id']
+            # Actualizar nombre en networkdevice
+            query = "UPDATE networkdevice SET device_name=%s WHERE id=%s"
+            self.db.execute_query(query, (new_name, network_id))
+            print("Router actualizado.")
+
+        elif opcion == "4":
+            router_id = input("ID del router a eliminar: ")
+            # Obtener network_id
+            network = self.db.fetch_query("SELECT network_id FROM router WHERE id=%s", (router_id,))
+            if not network:
+                print("Router no encontrado.")
+                return
+            network_id = network[0]['network_id']
+            # Eliminar Router
+            self.db.execute_query("DELETE FROM router WHERE id=%s", (router_id,))
+            # Eliminar NetworkDevice
+            self.db.execute_query("DELETE FROM networkdevice WHERE id=%s", (network_id,))
+            print("Router eliminado junto con su NetworkDevice.")

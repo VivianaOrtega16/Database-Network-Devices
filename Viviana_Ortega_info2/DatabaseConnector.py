@@ -30,11 +30,19 @@ from NetworkDevices import NetworkDevice
 
 class DatabaseConnector: 
     def __init__(self, host="localhost", user="root", password="", database="mynetworkdb"): 
-        self.host = host 
-        self.user = user 
-        self.password = password 
-        self.database = database 
-        self.connection = None
+        try:
+            self.connection = mysql.connector.connect(
+                host=host,
+                user=user,
+                password=password,
+                database=database
+            )
+            self.cursor = self.connection.cursor(dictionary=True)
+            print(" Conexión exitosa a la base de datos")
+        except mysql.connector.Error as err:
+            print(f" Error al conectar a la base de datos: {err}")
+            self.connection = None
+            self.cursor = None
      
      
         
